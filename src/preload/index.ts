@@ -677,6 +677,7 @@ const openbotApi: OpenBotDesktopApi = {
   }),
   computerUse: bridgeGroup(IPC_ENDPOINTS.computerUse, {
     getState: decodeComputerUseState,
+    recheck: decodeComputerUseState,
     openPermissionPane: decodeComputerUseState,
     closePermissionHelp: decodeVoid,
     getPermissionApp: decodeComputerUsePermissionApp,

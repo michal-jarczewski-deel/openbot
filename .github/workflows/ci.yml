@@ -369,6 +369,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run test:provider-exit-session
 
+      - name: Run the Computer Use permission recovery E2E test
+        if: ${{ !cancelled() }}
+        run: bun scripts/computer-use-permission-recovery-e2e.ts
+
       - name: Run the Codex missing rollout backfill E2E test
         if: ${{ !cancelled() }}
         run: bun run test:codex-missing-rollout
@@ -481,6 +485,7 @@ jobs:
             .openbot-build/zero-filled-settings-e2e/
             .openbot-build/provider-update-busy-e2e/
             .openbot-build/provider-exit-session-e2e/
+            .openbot-build/computer-use-permission-recovery-e2e/
             .openbot-build/codex-missing-rollout-e2e/
             .openbot-build/codex-usage-metering-e2e/
             .openbot-build/codex-usage-reset-e2e/

@@ -844,6 +844,7 @@ export const IPC_ENDPOINTS = {
   },
   computerUse: {
     getState: request<undefined, ComputerUseState>()("computer-use:get-state"),
+    recheck: request<undefined, ComputerUseState>()("computer-use:recheck"),
     openPermissionPane: request<MacPermissionId, ComputerUseState>()("computer-use:open-permission-pane"),
     closePermissionHelp: request<undefined, void>()("computer-use:close-permission-help"),
     getPermissionApp: request<undefined, ComputerUsePermissionApp | null>()("computer-use:get-permission-app"),

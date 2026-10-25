@@ -21,6 +21,12 @@ task — neither of which opens a window — reaches them too. A user who grante
 process, and no prompt is raised either way: only using the driver asks for a grant. Every other
 start is lazy, on a state read from the panel.
 
+Permission-help polling uses `getState` and keeps the daemon in place. Check again and returning
+focus to the setup panel use `recheck`. On macOS, recheck replaces a daemon that reported missing
+permissions before reading them again: AX trust can stay denied inside the old process after the
+user grants access. A ready daemon stays running, so a recheck does not interrupt input. Concurrent
+rechecks share one operation, and status reads wait for that operation.
+
 The control socket lives in the private per-user runtime directory, mode `0o700`, not in `/tmp`:
 whoever reaches it can drive the whole desktop. It cannot live under `userData`, because
 `sockaddr_un.sun_path` holds 104 bytes on macOS and an isolated development profile spends most of

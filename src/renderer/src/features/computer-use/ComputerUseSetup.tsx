@@ -71,12 +71,13 @@ export function ComputerUseSetup(props: ComputerUseSetupProps) {
 
   const permissions = () => state()?.permissions ?? [];
 
-  async function loadState(): Promise<void> {
+  async function loadState(recheck = false): Promise<void> {
     if (loading()) return;
     setLoading(true);
     setError(null);
     try {
-      const next = await computerUsePort().computerUse.getState();
+      const api = computerUsePort().computerUse;
+      const next = await (recheck ? api.recheck() : api.getState());
       if (!disposed) setState(next);
     } catch (cause) {
       if (!disposed) setError(errorMessage(cause, t("computerUse.error.check")));
@@ -104,7 +105,7 @@ export function ComputerUseSetup(props: ComputerUseSetupProps) {
   // sees when it is asked. Coming back to OpenBot is the moment the answer may have changed, so the
   // panel asks again rather than keeping a row that is granted already.
   const recheckOnReturn = () => {
-    if (showPermissions()) void loadState();
+    if (showPermissions()) void loadState(true);
   };
   window.addEventListener("focus", recheckOnReturn);
 
@@ -134,7 +135,7 @@ export function ComputerUseSetup(props: ComputerUseSetupProps) {
    */
   const recheckButton = () => (
     <Show when={showPermissions()}>
-      <Button type="button" variant="outline" size="sm" loading={loading()} onClick={() => void loadState()}>
+      <Button type="button" variant="outline" size="sm" loading={loading()} onClick={() => void loadState(true)}>
         <RefreshCw aria-hidden="true" />
         {t("computerUse.checkAgain")}
       </Button>
@@ -184,7 +185,7 @@ export function ComputerUseSetup(props: ComputerUseSetupProps) {
             </AlertDescription>
           </AlertContent>
           <AlertActions>
-            <Button type="button" variant="outline" size="sm" loading={loading()} onClick={() => void loadState()}>
+            <Button type="button" variant="outline" size="sm" loading={loading()} onClick={() => void loadState(true)}>
               <RefreshCw aria-hidden="true" />
               {t("common.tryAgain")}
             </Button>

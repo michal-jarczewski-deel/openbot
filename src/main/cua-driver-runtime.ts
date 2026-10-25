@@ -18,7 +18,7 @@ import {
 } from "@openbot/contracts/ipc";
 import { type DynamicRecord, isDynamicRecord } from "@openbot/contracts/runtime-values";
 import { sourceText } from "@openbot/i18n/source";
-import { Deferred, Effect, Exit, Result } from "effect";
+import { Deferred, Effect, Exit, Result, Semaphore } from "effect";
 import { agentDisplayEnvironment } from "./agent-display";
 import { CuaDriverActionTap, type ObservedAction, type ObservedPointer } from "./cua-driver-action-tap";
 import { CUA_DRIVER_VENDOR_CALLS_OFF } from "./cua-driver-artifact";
@@ -305,6 +305,8 @@ export class CuaDriverRuntime {
   #command: string | null = null;
   #child: ChildProcess | null = null;
   readonly #lifecycle = new LifecycleGate<void, CuaDriverFailure>();
+  readonly #stateReads = Semaphore.makeUnsafe(1);
+  readonly #permissionRechecks = new LifecycleGate<ComputerUseState, CuaDriverFailure>();
   #state: ComputerUseState;
   /** Mutable, because a user may install the driver while OpenBot runs. */
   #executable: string | null;
@@ -454,7 +456,29 @@ export class CuaDriverRuntime {
     return this.#lifecycle.stop(() => this.#stop());
   }
 
-  readonly state = Effect.fn("CuaDriver.state")(function* (
+  state(): Effect.Effect<ComputerUseState, CuaDriverFailure> {
+    return this.#stateReads.withPermit(this.#readState());
+  }
+
+  /**
+   * macOS can retain a denied AX trust result in a process after the user grants access.
+   * A user recheck renews only a daemon that already reported missing permissions. A ready
+   * daemon can serve active input, so it stays running. Status polling uses `state` instead.
+   */
+  recheck(): Effect.Effect<ComputerUseState, CuaDriverFailure> {
+    return this.#permissionRechecks.start(() =>
+      this.#stateReads.withPermit(
+        Effect.gen({ self: this }, function* () {
+          if (this.#options.platform === "darwin" && this.running() && this.#state.status === "permissions-required") {
+            yield* this.stop();
+          }
+          return yield* this.#readState();
+        }),
+      ),
+    );
+  }
+
+  #readState = Effect.fn("CuaDriver.state")(function* (
     this: CuaDriverRuntime,
   ): Effect.fn.Return<ComputerUseState, CuaDriverFailure> {
     if (!this.#options.supported) return this.#publish(this.#initialState());

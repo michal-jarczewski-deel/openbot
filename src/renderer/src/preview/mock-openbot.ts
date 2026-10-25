@@ -1082,6 +1082,7 @@ export function createMockOpenBot(options: MockOpenBotOptions = {}): MockOpenBot
     },
     computerUse: {
       getState: async () => computerUseState(),
+      recheck: async () => computerUseState(),
       // The preview grants the permission the pane was opened for, because the panel's whole job is
       // to show the answer changing. A mock that always reported the same state would make every
       // story of this panel look identical.
